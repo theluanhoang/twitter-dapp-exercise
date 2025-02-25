@@ -1,18 +1,28 @@
 import contractABI from "./abi.json";
 
 // 2️⃣ Set your smart contract address 👇
-const contractAddress = "";
+const contractAddress = "0xc640Bd366E2524AbB65710c1E178E27d53799dD5";
 
 let web3 = new Web3(window.ethereum);
 // 3️⃣ connect to the contract using web3
 // HINT: https://web3js.readthedocs.io/en/v1.2.11/web3-eth-contract.html#new-contract
 // let contract = YOUR CODE
+let contract = new web3.eth.Contract(contractABI, contractAddress);
 
 async function connectWallet() {
   if (window.ethereum) {
     // 1️⃣ Request Wallet Connection from Metamask
     // ANSWER can be found here: https://docs.metamask.io/wallet/get-started/set-up-dev-environment/
     // const accounts = YOUR CODE
+    const accounts = await window.ethereum
+      .request({ method: "eth_requestAccounts" })
+      .catch((err) => {
+        if (err.code === 4001) {
+          console.log("Please connect to MetaMask.");
+        } else {
+          console.error(err);
+        }
+      });
 
     setConnected(accounts[0]);
   } else {
@@ -32,6 +42,7 @@ async function createTweet(content) {
     // 7️⃣ Uncomment the displayTweets function! PRETTY EASY 🔥
     // GOAL: reload tweets after creating a new tweet
     // displayTweets(accounts[0]);
+    await contract.methods.createTweet(content).send({ from: accounts[0] });
   } catch (error) {
     console.error("User rejected request:", error);
   }
@@ -44,7 +55,8 @@ async function displayTweets(userAddress) {
   // 5️⃣ call the function getAllTweets from smart contract to get all the tweets
   // HINT: https://web3js.readthedocs.io/en/v1.2.11/web3-eth-contract.html#methods-mymethod-call
   // tempTweets = await YOUR CODE
-
+  console.log("CONTRACT METHODS:", contract.methods);
+  tempTweets = await contract.methods.getAllTweet(userAddress).call();
   // we do this so we can sort the tweets  by timestamp
   const tweets = [...tempTweets];
   tweets.sort((a, b) => b.timestamp - a.timestamp);
@@ -128,6 +140,7 @@ function setConnected(address) {
   // 6️⃣ Call the displayTweets function with address as input
   // This is the function in the javascript code, not smart contract 😉
   // GOAL: display all tweets after connecting to metamask
+  displayTweets(address);
 }
 
 document
